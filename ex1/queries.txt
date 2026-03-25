@@ -1,0 +1,34 @@
+1.
+db.repairs.countDocuments()
+
+2.
+db.repairs.countDocuments({ "viatura.marca": "Cadillac" })
+
+3.
+db.repairs.distinct("viatura.marca").sort()
+
+4.
+db.repairs.aggregate([
+  { $unwind: "$intervencoes" },
+  {
+    $group: {
+      _id: {
+        codigo: "$intervencoes.codigo",
+        nome: "$intervencoes.nome"
+      },
+      total: { $sum: 1 }
+    }
+  },
+  { $sort: { "_id.codigo": 1 } }
+])
+
+5.
+db.repairs.aggregate([
+  {
+    $group: {
+      _id: { $year: { $dateFromString: { dateString: "$data" } } },
+      total_clientes: { $sum: 1 }
+    }
+  },
+  { $sort: { "_id": 1 } }
+])

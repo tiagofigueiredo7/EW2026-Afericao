@@ -1,0 +1,42 @@
+services:
+  mongodb:
+    build:
+      context: ./ex1
+      dockerfile: Dockerfile.mongo
+    container_name: mongodb_autorepair
+    ports:
+      - "27017:27017"
+    networks:
+      - autorepair-network
+
+  api:
+    build:
+      context: ./ex1
+      dockerfile: Dockerfile
+    container_name: api_dados
+    ports:
+      - "16025:16025"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/autoRepair
+    depends_on:
+      - mongodb
+    networks:
+      - autorepair-network
+
+  interface:
+    build:
+      context: ./ex2
+      dockerfile: Dockerfile.interface
+    container_name: interface_web
+    ports:
+      - "16026:16026"
+    environment:
+      - API_URL=http://api_dados:16025
+    depends_on:
+      - api
+    networks:
+      - autorepair-network
+
+networks:
+  autorepair-network:
+    driver: bridge

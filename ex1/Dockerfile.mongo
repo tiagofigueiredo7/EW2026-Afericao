@@ -1,0 +1,5 @@
+FROM mongo:latest
+ 
+# Copia o dataset e o script de inicialização para dentro da imagem
+COPY reparacoes.json /docker-entrypoint-initdb.d/
+COPY mongo-init/import.sh /docker-entrypoint-initdb.d/

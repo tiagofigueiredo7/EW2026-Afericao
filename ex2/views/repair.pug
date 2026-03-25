@@ -1,0 +1,51 @@
+extends layout
+
+block content
+  .w3-card-4
+    header.w3-container.w3-teal
+      h1 Reparação de #{r.nome}
+      p.w3-opacity= r.data
+
+    .w3-container
+      table.w3-table-all.w3-margin-top
+        tr
+          th ID
+          td= r._id
+        tr
+          th Cliente
+          td= r.nome
+        tr
+          th NIF
+          td= r.nif
+        tr
+          th Data
+          td= r.data
+        tr
+          th Marca
+          td
+            a(href=`/${r.viatura.marca}`)= r.viatura.marca
+        tr
+          th Modelo
+          td= r.viatura.modelo
+        tr
+          th Matrícula
+          td= r.viatura.matricula
+        tr
+          th Nº Intervenções
+          td= r.nr_intervencoes
+
+    .w3-container.w3-margin-top
+      h3 Intervenções realizadas
+      table.w3-table-all
+        tr
+          th Código
+          th Nome
+          th Descrição
+        each i in r.intervencoes
+          tr.w3-hover-light-grey
+            td= i.codigo
+            td= i.nome
+            td= i.descricao
+
+    .w3-container.w3-margin-top.w3-margin-bottom
+      a.w3-btn.w3-grey.w3-border.w3-border-black(href="/") ← Voltar à lista
