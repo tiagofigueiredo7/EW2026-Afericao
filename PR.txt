@@ -1,0 +1,57 @@
+--- Persistência de Dados ---
+
+A persistência de dados é feita com MongoDB. Os dados são guardados numa base de dados chamada autoRepair, numa coleção chamada repairs. Cada documento da coleção corresponde a uma reparação e contém os campos: nome e NIF do cliente, data da reparação, informação da viatura (marca, modelo e matrícula), número de intervenções e a lista das intervenções realizadas (cada uma com código, nome e descrição).
+
+--- Análise e Limpeza do Dataset ---
+
+Antes de importar o dataset foi feita uma análise ao ficheiro dataset_reparacoes.json com recurso a um script Python (prepare_dataset.py). Foram detetados dois problemas: o ficheiro original estava envolvido numa chave "reparacoes" em vez de ser um array direto, e existiam intervenções duplicadas (mesmo código repetido dentro do mesmo registo) em 3012 dos 5000 registos, totalizando 6567 duplicações. O script removeu as intervenções duplicadas, atualizou o campo nr_intervencoes em conformidade, e gerou o ficheiro final repairs.json como um array JSON puro, pronto para importação.
+
+--- Setup da Base de Dados e Importação ---
+
+A base de dados é inicializada automaticamente quando o container Docker do MongoDB arranca. O ficheiro Dockerfile.mongo copia o repairs.json e o script mongo-init/import.sh para a pasta /docker-entrypoint-initdb.d/ da imagem. O MongoDB executa automaticamente todos os scripts presentes nessa pasta na primeira vez que o container é iniciado. O script import.sh corre o comando mongoimport para carregar o repairs.json na base de dados autoRepair, coleção repairs, com a flag --jsonArray.
+
+Para importar manualmente fora do Docker, o comando é o seguinte:
+mongoimport --db autoRepair --collection repairs --file repairs.json --jsonArray
+
+Para verificar se a importação correu bem:
+mongosh autoRepair --eval "db.repairs.countDocuments()"
+O resultado esperado é 5000.
+
+--- Queries MongoDB (Exercício 1.2) ---
+
+As queries desenvolvidas encontram-se no ficheiro queries.txt na pasta ex1. Respondem às seguintes questões: contagem total de automóveis reparados, contagem de automóveis da marca Cadillac, lista de marcas únicas ordenada alfabeticamente, distribuição por tipo de intervenção realizada e distribuição do número de clientes por ano.
+
+--- Exercício 1: API de Dados ---
+
+A API de dados foi desenvolvida em Node.js com Express e Mongoose e encontra-se na pasta ex1 no ficheiro server_data_api.js. Responde na porta 16025 e comunica diretamente com o MongoDB. As rotas implementadas são: GET /repairs para listar todas as reparações, GET /repairs?ano=YYYY para filtrar por ano, GET /repairs?marca=VRUM para filtrar por marca, GET /repairs/matriculas para listar matrículas únicas ordenadas alfabeticamente, GET /repairs/interv para listar intervenções únicas ordenadas por código, GET /repairs/:id para obter um registo pelo seu identificador, POST /repairs para inserir um novo registo e DELETE /repairs/:id para eliminar um registo.
+
+--- Exercício 2: Interface Web ---
+
+A interface web foi desenvolvida em Node.js com Express, Pug e Axios e encontra-se na pasta ex2 no ficheiro app_interface.js. Responde na porta 16026 e obtém todos os dados através da API de dados, nunca acedendo diretamente à base de dados. A página principal em http://localhost:16026 apresenta uma tabela com todos os registos. Cada _id é um link para a página do registo individual e cada marca é um link para a página dessa marca. A página de cada registo mostra todos os campos e a lista de intervenções realizadas. A página de cada marca mostra os modelos intervencionados e a tabela de registos dessa marca.
+
+--- Como Executar com Docker (recomendado) ---
+
+É necessário ter o Docker e o Docker Compose instalados. Na raiz do repositório, onde se encontra o ficheiro docker-compose.yml, correr o seguinte comando:
+
+docker compose up --build
+
+Este comando constrói as três imagens (MongoDB, API e Interface) e inicia os três serviços em rede. Após o arranque, a interface fica disponível em http://localhost:16026 e a API em http://localhost:16025. O MongoDB fica acessível na porta 27017.
+
+Para parar os serviços:
+docker compose down
+
+--- Como Executar Localmente (sem Docker) ---
+
+É necessário ter o Node.js e o MongoDB instalados e o MongoDB a correr localmente na porta 27017. Importar o dataset conforme descrito acima. De seguida, na pasta ex1, instalar as dependências e arrancar a API:
+
+cd ex1
+npm install
+node server_data_api.js
+
+Depois, numa segunda janela de terminal, na pasta ex2, instalar as dependências e arrancar a interface:
+
+cd ex2
+npm install
+node app_interface.js
+
+A interface fica disponível em http://localhost:16026 e a API em http://localhost:16025.
